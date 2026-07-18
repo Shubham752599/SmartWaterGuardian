@@ -4,3 +4,5 @@ mysqlclient
 gunicorn
 Werkzeug
 python-dotenv
+openpyxl
+reportlab
