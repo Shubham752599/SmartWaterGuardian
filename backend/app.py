@@ -13,6 +13,7 @@ from flask import Flask, render_template, request, redirect,session,flash
 from flask_mysqldb import MySQL
 from werkzeug.utils import secure_filename
 import os
+import ssl
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -25,10 +26,13 @@ app = Flask(
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Root@7525'
-app.config['MYSQL_DB'] = 'smart_water_guardian'
+app.config['MYSQL_HOST'] = os.getenv("MYSQL_HOST")
+app.config['MYSQL_USER'] = os.getenv("MYSQL_USER")
+app.config['MYSQL_PASSWORD'] = os.getenv("MYSQL_PASSWORD")
+app.config['MYSQL_DB'] = os.getenv("MYSQL_DB")
+app.config['MYSQL_PORT'] = int(os.getenv("MYSQL_PORT", 3306))
+app.config['MYSQL_SSL_MODE'] = 'REQUIRED'
+app.config['MYSQL_SSL_CA'] = os.path.join(BASE_DIR, "backend", "ca.pem")
 app.secret_key = "smartwaterguardian123"
 
 mysql = MySQL(app)
