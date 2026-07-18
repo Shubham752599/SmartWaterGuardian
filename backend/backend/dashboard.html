@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Smart Water Guardian</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div id="loader">
+       <div class="spinner"></div>
+    </div>
+
+
+<nav>
+    <div class="logo">
+        <h2>💧 Smart Water Guardian</h2>
+    </div>
+    <div class="menu-toggle" onclick="toggleMenu()">
+       ☰
+    </div>
+
+    <ul class="menu">
+        <li><a href="/">Home</a></li>
+        <li><a href="/report">Report</a></li>
+        <li><a href="/logout">Logout</a></li>
+        <li>
+            <button id="themeBtn" onclick="toggleTheme()">
+                🌙 Dark Mode
+            </button>
+        </li>
+    </ul>
+</nav>
+
+<div class="dashboard">
+
+    <h1 id="greeting"></h1>
+
+    <p>You have successfully logged in.</p>
+    <div class="live-clock">
+        <h3>🕒 <span id="clock"></span></h3>
+    </div>
+
+    <div class="stats">
+
+    <a href="/dashboard" class="stat-link">
+        <div class="stat-card">
+            <h2 id="totalCount">{{ total_reports }}</h2>
+            <p>📄 Total Reports</p>
+        </div>
+    </a>
+
+    <a href="/dashboard" class="stat-link">
+        <div class="stat-card">
+            <h2>{{ total_users }}</h2>
+            <p>👤 Total Users</p>
+        </div>
+    </a>
+
+    <a href="/dashboard?status=Pending" class="stat-link">
+        <div class="stat-card">
+            <h2>{{ pending_reports }}</h2>
+            <p>🟡 Pending</p>
+        </div>
+    </a>
+
+    <a href="/dashboard?status=In+Progress" class="stat-link">
+        <div class="stat-card">
+            <h2>{{ inprogress_reports }}</h2>
+            <p>🔵 In Progress</p>
+        </div>
+    </a>
+
+    <a href="/dashboard?status=Resolved" class="stat-link">
+        <div class="stat-card">
+            <h2>{{ resolved_reports }}</h2>
+            <p>🟢 Resolved</p>
+        </div>
+    </a>
+
+</div>
+
+<div style="margin:30px 0; text-align:center;">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    {% for category, message in messages %}
+        <div class="flash {{ category }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+{% endwith %}
+
+    <form method="GET" action="/dashboard">
+
+    <input
+        type="text"
+        name="search"
+        placeholder="🔍 Search by Name or City"
+        value="{{ search }}">
+
+    <select name="status">     
+
+        <option value="">All Status</option>
+
+        <option value="Pending"
+            {% if status=="Pending" %}selected{% endif %}>
+            Pending
+        </option>
+
+        <option value="In Progress"
+            {% if status=="In Progress" %}selected{% endif %}>
+            In Progress
+        </option>
+
+        <option value="Resolved"
+            {% if status=="Resolved" %}selected{% endif %}>
+            Resolved
+        </option>
+
+    </select>
+
+
+    <button type="submit">
+        Search
+    </button>
+    <a href="/dashboard" class="delete-btn">
+        ❌ Reset
+    </a>
+
+</form>
+
+</div>
+<div style="text-align:center; margin:20px;">
+
+    <a href="/export_pdf" class="edit-btn">
+        📄 Export PDF
+    </a>
+
+    <a href="/export_excel" class="edit-btn">
+    📊 Export Excel
+    </a>
+
+</div>
+
+<h2 style="margin-top:50px;">Recent Reports</h2>
+
+<table class="report-table">
+
+    <tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>City</th>
+    <th>Leakage Type</th>
+    <th>Mobile</th>
+    <th>Image</th>
+    <th>Status</th>
+    <th>Date & Time</th>
+    <th>Action</th>
+    
+</tr>
+
+    {% for report in reports %}
+
+    <tr>
+    <td>{{ report[0] }}</td>
+    <td>{{ report[1] }}</td>
+    <td>{{ report[2] }}</td>
+    <td>{{ report[3] }}</td>
+    <td>{{ report[4] }}</td>
+
+    <td>
+
+{% if report[5] %}
+
+    <img src="{{ url_for('static', filename='uploads/' + report[5]) }}"
+        width="80"
+        height="80"
+        style="border-radius:10px; object-fit:cover; cursor:pointer;"
+        onclick="openImage(this.src)">
+
+{% else %}
+
+    <span>No Image</span>
+
+{% endif %}
+
+</td>
+
+    <td>
+{% if report[6] == "Pending" %}
+
+    <span style="color:orange;font-weight:bold;">🟡 Pending</span>
+
+{% elif report[6] == "Resolved" %}
+    <span style="color:green;font-weight:bold;">🟢 Resolved</span>
+
+{% else %}
+    <span style="color:blue;font-weight:bold;">🔵 In Progress</span>
+{% endif %}
+</td>
+<td>{{ report[7] }}</td>
+
+    <td>
+    <div class="action-buttons">
+
+        <a href="/view/{{ report[0] }}" class="edit-btn">
+            👁 View
+        </a>
+
+        <a href="/edit/{{ report[0] }}" class="edit-btn">
+            ✏ Edit
+        </a>
+
+        <a href="/update_status/{{ report[0] }}" class="status-btn">
+            🔄 Status
+        </a>
+
+        <a href="/delete/{{ report[0] }}"
+           class="delete-btn"
+           onclick="return confirm('Delete this report?')">
+           🗑 Delete
+        </a>
+
+    </div>
+</td>
+</tr>
+
+    {% endfor %}
+
+</table>
+
+<div class="pagination">
+
+    {% if page > 1 %}
+    <a href="/dashboard?page={{ page-1 }}&search={{ search }}&status={{ status }}&date={{ date }}">
+        ⬅ Previous
+    </a>
+    {% endif %}
+
+    <span>
+        Page {{ page }} of {{ pages }}
+    </span>
+
+    {% if page < pages %}
+    <a href="/dashboard?page={{ page+1 }}&search={{ search }}&status={{ status }}&date={{ date }}">
+        Next ➡
+    </a>
+    {% endif %}
+
+</div>
+
+<div class="chart-container">
+
+    <h2>📊 Report Status Analytics</h2>
+
+    <canvas id="statusChart"></canvas>
+
+</div>
+
+<div class="chart-container">
+
+    <h2>📍 City Wise Reports</h2>
+
+    <canvas id="cityChart"></canvas>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+// ================= Pie Chart =================
+
+const ctx = document.getElementById("statusChart");
+
+new Chart(ctx, {
+    type: "pie",
+    data: {
+        labels: ["Pending", "In Progress", "Resolved"],
+        datasets: [{
+            data: [
+                {{ pending_reports }},
+                {{ inprogress_reports}},
+                {{ resolved_reports }}
+            ],
+            backgroundColor: ["orange", "blue", "green"]
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+
+
+// ================= Bar Chart =================
+
+const cityCtx = document.getElementById("cityChart");
+
+new Chart(cityCtx, {
+
+    type: "bar",
+
+    data: {
+
+        labels: [
+            {% for city in city_data %}
+                "{{ city[0] }}",
+            {% endfor %}
+        ],
+
+        datasets: [{
+            label: "Reports",
+            data: [
+                {% for city in city_data %}
+                    {{ city[1] }},
+                {% endfor %}
+            ],
+            backgroundColor: "#15803d"
+        }]
+    },
+
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+
+});
+
+function openImage(src){
+
+    document.getElementById("imageModal").style.display = "block";
+    document.getElementById("modalImage").src = src;
+
+}
+
+function closeImage(){
+
+    document.getElementById("imageModal").style.display = "none";
+
+}
+function updateClock(){
+
+    const now = new Date();
+
+    const options = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    };
+
+    const date = now.toLocaleDateString("en-IN", options);
+    const time = now.toLocaleTimeString("en-IN");
+
+    document.getElementById("clock").innerHTML = date + " | " + time;
+
+}
+
+setInterval(updateClock,1000);
+
+updateClock();
+window.onload = function(){
+
+    document.getElementById("loader").style.display = "none";
+
+    if(localStorage.getItem("theme")=="dark"){
+
+        document.body.classList.add("dark-mode");
+
+        const btn=document.getElementById("themeBtn");
+
+        if(btn){
+            btn.innerHTML="☀";
+        }
+    }
+
+    updateClock();
+
+}
+
+// Auto Refresh Every 30 Seconds
+setTimeout(function () {
+    location.reload();
+}, 30000);
+
+let count = 0;
+let target = {{ total_reports }};
+
+let counter = setInterval(() => {
+
+    if(count >= target){
+        clearInterval(counter);
+    }else{
+        count++;
+        document.getElementById("totalCount").innerHTML = count;
+    }
+
+},40);
+
+const hour = new Date().getHours();
+
+let msg = "";
+
+if(hour < 12){
+    msg = "🌞 Good Morning";
+}
+else if(hour < 17){
+    msg = "☀ Good Afternoon";
+}
+else{
+    msg = "🌙 Good Evening";
+}
+
+document.getElementById("greeting").innerHTML =
+msg + ", {{ username }} 👋";
+
+function toggleTheme(){
+
+    document.body.classList.toggle("dark-mode");
+
+    if(document.body.classList.contains("dark-mode")){
+
+        localStorage.setItem("theme","dark");
+
+        document.getElementById("themeBtn").innerHTML="☀ Light Mode";
+
+    }
+
+    else{
+
+        localStorage.setItem("theme","light");
+
+        document.getElementById("themeBtn").innerHTML="🌙 Dark Mode";
+
+    }
+
+}
+
+window.onload=function(){
+
+    if(localStorage.getItem("theme")=="dark"){
+
+        document.body.classList.add("dark-mode");
+
+        document.getElementById("themeBtn").innerHTML="☀ Light Mode";
+
+    }
+
+}
+
+</script>
+<!-- Image Modal -->
+
+<div id="imageModal" class="modal">
+
+    <span class="close" onclick="closeImage()">&times;</span>
+
+    <img class="modal-content" id="modalImage">
+
+</div>
+
+<script>
+
+function toggleTheme(){
+
+    document.body.classList.toggle("dark-mode");
+
+    if(document.body.classList.contains("dark-mode")){
+
+        localStorage.setItem("theme","dark");
+        document.getElementById("themeBtn").innerHTML="☀";
+
+    }else{
+
+        localStorage.setItem("theme","light");
+        document.getElementById("themeBtn").innerHTML="🌙";
+
+    }
+
+}
+
+window.onload = function () {
+
+    // Hide Loader
+    const loader = document.getElementById("loader");
+    if(loader){
+        loader.style.display = "none";
+    }
+
+    // Dark Mode
+    if(localStorage.getItem("theme")=="dark"){
+
+        document.body.classList.add("dark-mode");
+
+        const btn=document.getElementById("themeBtn");
+
+        if(btn){
+            btn.innerHTML="☀";
+        }
+
+    }
+
+}
+const topBtn = document.getElementById("topBtn");
+
+window.onscroll = function(){
+
+    if(document.body.scrollTop > 300 || document.documentElement.scrollTop > 300){
+
+        topBtn.style.display = "block";
+
+    }else{
+
+        topBtn.style.display = "none";
+
+    }
+
+}
+
+function topFunction(){
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+</script>
+<button onclick="topFunction()" id="topBtn" title="Go to top">
+    ⬆
+</button>
+</body>
+</html>
