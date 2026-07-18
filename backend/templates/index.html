@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Water Guardian</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+   <nav>
+    <div class="logo">
+        <h2>💧 Smart Water Guardian</h2>
+    </div>
+       <div class="menu-toggle" onclick="toggleMenu()">
+       ☰
+    </div>
+
+    <ul class="menu">
+        <li><a href="/">Home</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="/login">Login</a></li>
+        <li><a href="/register">Register</a></li>
+        <li>
+            <button id="themeBtn" onclick="toggleTheme()">
+           🌙
+            </button>
+</li>
+    </ul>
+</nav>
+
+   <section class="hero">
+
+    <div class="hero-text">
+        <h1>AI Powered Water Leakage Detection System</h1>
+
+        <p>
+            Detect water leakage in real time using Artificial Intelligence,
+            IoT sensors and cloud analytics.
+        </p>
+
+        <a href="/report" class="btn">Report Leakage</a>
+        <a href="/login" class="btn">Admin Login</a>
+    </div>
+
+    <div class="hero-image">
+        <img src="{{ url_for('static', filename='images/hero.png') }}" alt="Hero Image">
+    </div>
+
+</section> 
+
+<section class="stats">
+
+    <div class="stat-card">
+        <h2>{{ total_reports }}</h2>
+        <p>📄 Total Reports</p>
+    </div>
+
+    <div class="stat-card">
+        <h2>{{ total_users }}</h2>
+        <p>👤 Total Users</p>
+    </div>
+
+    <div class="stat-card">
+        <h2>{{ pending_reports }}</h2>
+        <p>🟡 Pending Reports</p>
+    </div>
+
+    <div class="stat-card">
+        <h2>{{ resolved_reports }}</h2>
+        <p>🟢 Resolved Reports</p>
+    </div>
+
+</section>
+
+<section class="features" id="features">
+
+    <div class="card">
+        <h2>💧</h2>
+        <h3>Leak Detection</h3>
+        <p>AI identifies water leakages instantly using smart monitoring techniques.</p>
+    </div>
+
+    <div class="card">
+        <h2>📊</h2>
+        <h3>Analytics Dashboard</h3>
+        <p>Monitor water usage, leak history and consumption through interactive dashboards.</p>
+    </div>
+
+    <div class="card">
+        <h2>📍</h2>
+        <h3>Live Location</h3>
+        <p>Track the exact location of reported leakages using integrated maps.</p>
+    </div>
+
+    <div class="card">
+        <h2>📱</h2>
+        <h3>Instant Alerts</h3>
+        <p>Receive notifications immediately whenever a leakage is detected.</p>
+    </div>
+
+    <div class="card">
+        <h2>🤖</h2>
+        <h3>AI Prediction</h3>
+        <p>Predict future water leakage risks using historical data and AI models.</p>
+    </div>
+
+    <div class="card">
+        <h2>🌱</h2>
+        <h3>Water Conservation</h3>
+        <p>Reduce water wastage and promote sustainable water management.</p>
+    </div>
+
+</section>
+
+    <section class="about" id="about">
+    <h2>About Our Project</h2>
+    <p>
+        Smart Water Guardian is an AI-powered system that helps detect water leakage,
+        monitor water usage, and promote sustainability through intelligent analytics.
+    </p>
+    </section>
+
+    <section class="contact" id="contact">
+
+    <h2>📞 Contact Us</h2>
+
+    <p>Email : support@smartwaterguardian.com</p>
+
+    <p>Phone : +91 7525992654</p>
+
+    <p>Address : Kanpur, Uttar Pradesh, India</p>
+
+</section>
+
+    <footer>
+
+    <h2>💧 Smart Water Guardian</h2>
+
+    <p>AI Based Water Leakage Detection & Monitoring System</p>
+
+    <p>
+        Developed by <strong>Shubham Maurya</strong><br>
+        B.Tech CSE (Data Science)
+    </p>
+
+    <p>© 2026 All Rights Reserved.</p>
+
+</footer>
+<script>
+
+function toggleTheme(){
+
+    document.body.classList.toggle("dark-mode");
+
+    if(document.body.classList.contains("dark-mode")){
+
+        localStorage.setItem("theme","dark");
+
+        document.getElementById("themeBtn").innerHTML="☀";
+
+    }else{
+
+        localStorage.setItem("theme","light");
+
+        document.getElementById("themeBtn").innerHTML="🌙";
+
+    }
+
+}
+
+window.onload=function(){
+
+    if(localStorage.getItem("theme")=="dark"){
+
+        document.body.classList.add("dark-mode");
+
+        const btn=document.getElementById("themeBtn");
+
+        if(btn){
+            btn.innerHTML="☀";
+        }
+
+    }
+
+}
+
+</script>
+<script>
+
+function toggleMenu(){
+
+    document.querySelector(".menu").classList.toggle("active");
+
+}
+
+</script>
+</body>
+</html>

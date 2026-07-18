@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Report</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<nav>
+    <div class="logo">
+        <h2>💧 Smart Water Guardian</h2>
+    </div>
+    <div class="menu-toggle" onclick="toggleMenu()">
+       ☰
+    </div>
+
+    <ul class="menu">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/logout">Logout</a></li>
+    </ul>
+</nav>
+
+<div class="report-container">
+
+    <h1>Edit Water Leakage Report</h1>
+
+    <form method="POST">
+
+        <input type="text"
+               name="fullname"
+               value="{{ report[1] }}"
+               required>
+
+        <input type="text"
+               name="mobile"
+               value="{{ report[2] }}"
+               required>
+
+        <input type="text"
+               name="address"
+               value="{{ report[3] }}"
+               required>
+
+        <input type="text"
+               name="city"
+               value="{{ report[4] }}"
+               required>
+
+        <input type="text"
+               name="leakage_type"
+               value="{{ report[5] }}"
+               required>
+
+        <textarea
+            name="description"
+            rows="5"
+            required>{{ report[6] }}</textarea>
+
+        <button type="submit">
+            Update Report
+        </button>
+
+    </form>
+
+</div>
+<script>
+
+function toggleMenu(){
+
+    document.querySelector(".menu").classList.toggle("active");
+
+}
+
+</script>
+</body>
+</html>
