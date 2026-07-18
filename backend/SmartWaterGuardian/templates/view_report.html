@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Report</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<nav>
+    <div class="logo">
+        <h2>💧 Smart Water Guardian</h2>
+    </div>
+    <div class="menu-toggle" onclick="toggleMenu()">
+       ☰
+    </div>
+
+    <ul class="menu">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/logout">Logout</a></li>
+    </ul>
+</nav>
+
+<div class="report-container">
+
+    <h1>📄 Report Details</h1>
+
+    <table class="report-table">
+
+        <tr>
+            <th>ID</th>
+            <td>{{ report[0] }}</td>
+        </tr>
+
+        <tr>
+            <th>Full Name</th>
+            <td>{{ report[1] }}</td>
+        </tr>
+
+        <tr>
+            <th>Mobile</th>
+            <td>{{ report[2] }}</td>
+        </tr>
+
+        <tr>
+            <th>Address</th>
+            <td>{{ report[3] }}</td>
+        </tr>
+
+        <tr>
+            <th>City</th>
+            <td>{{ report[4] }}</td>
+        </tr>
+
+        <tr>
+            <th>Leakage Type</th>
+            <td>{{ report[5] }}</td>
+        </tr>
+
+        <tr>
+            <th>Description</th>
+            <td>{{ report[6] }}</td>
+        </tr>
+
+        <tr>
+            <th>Status</th>
+            <td>{{ report[8] }}</td>
+        </tr>
+
+        <tr>
+            <th>Image</th>
+            <td>
+
+            {% if report[7] %}
+
+            <img
+                id="reportImage"
+                src="{{ url_for('static', filename='uploads/' + report[7]) }}"
+                width="300"
+                style="border-radius:10px; cursor:pointer;">
+
+            {% else %}
+
+            No Image
+
+            {% endif %}
+
+            </td>
+        </tr>
+
+    </table>
+
+    <br>
+
+    <a href="/dashboard" class="edit-btn">
+        ⬅ Back to Dashboard
+    </a>
+
+</div>
+<div id="imageModal" class="modal">
+
+    <span class="close">&times;</span>
+
+    <img class="modal-content" id="img01">
+
+</div>
+
+<script>
+
+const modal = document.getElementById("imageModal");
+
+const img = document.getElementById("reportImage");
+
+const modalImg = document.getElementById("img01");
+
+img.onclick = function(){
+
+    modal.style.display = "block";
+
+    modalImg.src = this.src;
+
+}
+
+document.querySelector(".close").onclick = function(){
+
+    modal.style.display = "none";
+
+}
+
+modal.onclick = function(){
+
+    modal.style.display = "none";
+
+}
+
+</script>
+<script>
+
+function toggleMenu(){
+
+    document.querySelector(".menu").classList.toggle("active");
+
+}
+
+</script>
+</body>
+</html>
