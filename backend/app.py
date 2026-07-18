@@ -25,10 +25,12 @@ app = Flask(
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Root@7525'
+app.config['MYSQL_HOST'] = 'mysql-5336d3f-shubhamkushwaha7525-4c26.i.aivencloud.com'
+app.config['MYSQL_PORT'] = 15992
+app.config['MYSQL_USER'] = 'avnadmin'
+app.config['MYSQL_PASSWORD'] = os.getenv("MYSQL_PASSWORD")
 app.config['MYSQL_DB'] = 'smart_water_guardian'
+app.config['MYSQL_SSL_CA'] = 'ca.pem'
 app.secret_key = "smartwaterguardian123"
 
 mysql = MySQL(app)
