@@ -18,7 +18,12 @@ from dotenv import load_dotenv
 load_dotenv()
 print("RUNNING FILE:", __file__)
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+if os.path.exists(os.path.join(BASE_DIR, "..", "templates")):
+    PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
+else:
+    PROJECT_ROOT = BASE_DIR
 
 app = Flask(
     
@@ -35,7 +40,6 @@ print(app.jinja_loader.searchpath)
 print("Template Folder:", app.template_folder)
 print("Static Folder:", app.static_folder)
 print("Exists:", os.path.exists(app.template_folder))
-print("Files:", os.listdir(app.template_folder))
 
 UPLOAD_FOLDER = os.path.join(PROJECT_ROOT, "static", "uploads")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
