@@ -13,34 +13,91 @@ from flask import Flask, render_template, request, redirect,session,flash
 from flask_mysqldb import MySQL
 from werkzeug.utils import secure_filename
 import os
+from dotenv import load_dotenv
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv()
+print("RUNNING FILE:", __file__)
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 app = Flask(
     
     __name__,
-    template_folder=os.path.join(BASE_DIR, "templates"),
-    static_folder=os.path.join(BASE_DIR, "static")
+    template_folder=os.path.join(PROJECT_ROOT, "templates"),
+    static_folder=os.path.join(PROJECT_ROOT, "static")
+    
 )
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+from jinja2 import FileSystemLoader
+
+app.jinja_loader = FileSystemLoader(app.template_folder)
+
+print(app.jinja_loader.searchpath)
+print("Template Folder:", app.template_folder)
+print("Static Folder:", app.static_folder)
+print("Exists:", os.path.exists(app.template_folder))
+print("Files:", os.listdir(app.template_folder))
+
+UPLOAD_FOLDER = os.path.join(PROJECT_ROOT, "static", "uploads")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 app.config['MYSQL_HOST'] = os.getenv("MYSQL_HOST")
 app.config['MYSQL_USER'] = os.getenv("MYSQL_USER")
 app.config['MYSQL_PASSWORD'] = os.getenv("MYSQL_PASSWORD")
 app.config['MYSQL_DB'] = os.getenv("MYSQL_DB")
-app.config['MYSQL_PORT'] = int(os.getenv("MYSQL_PORT"))
-app.config['MYSQL_SSL_CA'] = 'ca.pem'
+app.config["MYSQL_PORT"] = int(os.getenv("MYSQL_PORT", "3306"))
 app.secret_key = "smartwaterguardian123"
-app.config["MYSQL_SSL_MODE"] = "REQUIRED"
-app.config["MYSQL_SSL_CA"] = "ca.pem"
 
-mysql = MySQL(app)
+
+print("HOST =", os.getenv("MYSQL_HOST"))
+print("USER =", os.getenv("MYSQL_USER"))
+print("DB =", os.getenv("MYSQL_DB"))
+print("PORT =", os.getenv("MYSQL_PORT"))
+print("PASSWORD =", os.getenv("MYSQL_PASSWORD"))
+
+print("\n===== Flask Config =====")
+print(app.config["MYSQL_HOST"])
+print(app.config["MYSQL_USER"])
+print(app.config["MYSQL_DB"])
+print(app.config["MYSQL_PORT"])
+print(app.config["MYSQL_PASSWORD"])
+print("========================\n")
+
+import MySQLdb
+
+def get_db():
+    return MySQLdb.connect(
+        host=os.getenv("MYSQL_HOST"),
+        user=os.getenv("MYSQL_USER"),
+        passwd=os.getenv("MYSQL_PASSWORD"),
+        db=os.getenv("MYSQL_DB"),
+        port=int(os.getenv("MYSQL_PORT")),
+        ssl_mode="REQUIRED",
+        ssl={"ca": os.path.join(PROJECT_ROOT, "ca.pem")}
+    )
+print(">>> REGISTERING RAWTEST ROUTE <<<")
+
+@app.route("/rawtest")
+def rawtest():
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT DATABASE()")
+    print("Current DB:", cur.fetchone())
+
+    cur.execute("SHOW TABLES")
+    print("Tables:", cur.fetchall())
+
+    cur.close()
+    conn.close()
+
+    return "OK"
 
 @app.route("/")
 def home():
+    print("********HOME ROUT EXECUTED********")
 
-    cur = mysql.connection.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
     cur.execute("SELECT COUNT(*) FROM reports")
     total_reports = cur.fetchone()[0]
@@ -55,6 +112,8 @@ def home():
     resolved_reports = cur.fetchone()[0]
 
     cur.close()
+    conn.close()
+    print("Rendering index.html")
 
     return render_template(
         "index.html",
@@ -72,7 +131,8 @@ def login():
         email = request.form["email"]
         password = request.form["password"]
 
-        cur = mysql.connection.cursor()
+        conn = get_db()
+        cur = conn.cursor()
 
         cur.execute(
             "SELECT * FROM users WHERE email=%s",
@@ -82,6 +142,7 @@ def login():
         user = cur.fetchone()
 
         cur.close()
+        conn.close()
 
         if user and check_password_hash(user[3], password):
 
@@ -108,15 +169,18 @@ def register():
         password = request.form["password"]
         hashed_password = generate_password_hash(password)
 
-        cur = mysql.connection.cursor()
+        conn = get_db()
+        cur = conn.cursor()
 
         cur.execute("""
             INSERT INTO users(fullname, email,password)
             VALUES(%s, %s, %s)
         """, (fullname, email, hashed_password))
 
-        mysql.connection.commit()
+        conn.commit()
+
         cur.close()
+        conn.close()
 
         return render_template(
             "register.html",
@@ -164,7 +228,8 @@ def report():
 
         # ================= Database =================
 
-        cur = mysql.connection.cursor()
+        conn = get_db()
+        cur = conn.cursor()
 
         cur.execute("""
         INSERT INTO reports
@@ -180,9 +245,9 @@ def report():
             filename
         ))
 
-        mysql.connection.commit()
+        conn.commit()
         cur.close()
-
+        conn.close()
         flash("✅ Report Submitted Successfully!", "success")
         return redirect("/dashboard")
 
@@ -202,11 +267,11 @@ def dashboard():
     page = request.args.get("page", 1, type=int)
     per_page = 10
     offset = (page - 1) * per_page
-
-    cur = mysql.connection.cursor()
-
-    # Total Reports
+    conn = get_db()
+    cur = conn.cursor()
+    # Total reports
     cur.execute("SELECT COUNT(*) FROM reports")
+
     total_reports = cur.fetchone()[0]
 
     # Total Users
@@ -275,6 +340,7 @@ def dashboard():
     pages = (total + per_page - 1) // per_page
 
     cur.close()
+    conn.close()
 
     return render_template(
         "dashboard.html",
@@ -299,12 +365,14 @@ def view_report(id):
     if "user" not in session:
         return redirect("/login")
 
-    cur = mysql.connection.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
     cur.execute("SELECT * FROM reports WHERE id=%s", (id,))
     report = cur.fetchone()
 
     cur.close()
+    conn.close()
 
     return render_template(
         "view_report.html",
@@ -317,13 +385,15 @@ def delete(id):
     if "user" not in session:
         return redirect("/login")
 
-    cur = mysql.connection.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
     cur.execute("DELETE FROM reports WHERE id=%s", (id,))
 
-    mysql.connection.commit()
+    conn.commit()
 
     cur.close()
+    conn.close()
     flash("🗑 Report Deleted Successfully!", "success")
 
     return redirect("/dashboard")
@@ -333,7 +403,8 @@ def edit(id):
     if "user" not in session:
         return redirect("/login")
 
-    cur = mysql.connection.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
     # Update Data
     if request.method == "POST":
@@ -364,8 +435,9 @@ def edit(id):
             id
         ))
 
-        mysql.connection.commit()
+        conn.commit()
         cur.close()
+        conn.close()
         flash("✏️ Report Updated Successfully!", "success")
 
         return redirect("/dashboard")
@@ -375,6 +447,7 @@ def edit(id):
     report = cur.fetchone()
 
     cur.close()
+    conn.close()
 
     return render_template("edit_report.html", report=report)
 
@@ -384,7 +457,8 @@ def update_status(id):
     if "user" not in session:
         return redirect("/login")
 
-    cur = mysql.connection.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
     # Current Status
     cur.execute("SELECT status FROM reports WHERE id=%s", (id,))
@@ -405,8 +479,9 @@ def update_status(id):
         (new_status, id)
     )
 
-    mysql.connection.commit()
+    conn.commit()
     cur.close()
+    conn.close()
     flash("🔄 Status Updated Successfully!", "success")
 
     return redirect("/dashboard")
@@ -417,7 +492,8 @@ def export_pdf():
     if "user" not in session:
         return redirect("/login")
 
-    cur = mysql.connection.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
     cur.execute("""
         SELECT fullname, city, leakage_type, mobile, status
@@ -428,6 +504,7 @@ def export_pdf():
     reports = cur.fetchall()
     
     cur.close()
+    conn.close()
 
     buffer = BytesIO()
 
@@ -477,7 +554,8 @@ def export_excel():
     if "user" not in session:
         return redirect("/login")
 
-    cur = mysql.connection.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
     cur.execute("""
         SELECT fullname, city, leakage_type, mobile, status
@@ -487,6 +565,7 @@ def export_excel():
 
     reports = cur.fetchall()
     cur.close()
+    conn.close()
 
     wb = Workbook()
     ws = wb.active
@@ -532,12 +611,23 @@ def logout():
 
 def testdb():
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT 1")
+        conn = get_db()
+        cur = conn.cursor()
+        print(conn)
+
+        cur = conn.cursor()
+        cur.execute("SELECT VERSION()")
+        print(cur.fetchone())
         cur.close()
-        return "✅ Database Connected Successfully!"
+        conn.close()
+
+        return "Database Connected"
+
     except Exception as e:
-        return f"❌ Error: {e}"
+        import traceback
+        traceback.print_exc()
+        return str(e)
+    
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
 
@@ -546,20 +636,24 @@ def forgot_password():
         email = request.form["email"]
         new_password = request.form["password"]
 
-        cur = mysql.connection.cursor()
+        conn = get_db()
+        cur = conn.cursor()
 
         cur.execute("SELECT * FROM users WHERE email=%s", (email,))
         user = cur.fetchone()
 
         if user:
 
+            hashed = generate_password_hash(new_password)
+
             cur.execute(
                 "UPDATE users SET password=%s WHERE email=%s",
-                (new_password, email)
+                (hashed, email)
             )
 
-            mysql.connection.commit()
+            conn.commit()
             cur.close()
+            conn.close()
 
             return render_template(
                 "forgot_password.html",
@@ -569,6 +663,7 @@ def forgot_password():
         else:
 
             cur.close()
+            conn.close()
 
             return render_template(
                 "forgot_password.html",
@@ -579,7 +674,10 @@ def forgot_password():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)
+    app.run(
+        host="0.0.0.0",
+        port=8080,
+        debug=True
+    )
 
     

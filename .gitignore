@@ -1,0 +1,21 @@
+# Virtual Environment
+.venv/
+venv/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Environment Variables
+.env
+backend/.env
+
+# Uploads
+static/uploads/
+backend/static/uploads/
+
+# Test files
+backend/test.py
+
+# VS Code
+.vscode/
